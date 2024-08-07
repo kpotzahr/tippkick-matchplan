@@ -1,0 +1,77 @@
+image: docker:latest
+services:
+- docker:dind
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  DOCKER_DRIVER: overlay
+
+before_script:
+- export GRADLE_USER_HOME=`pwd`/.gradle
+
+cache:
+  key: ${CI_COMMIT_SHA}
+  paths:
+  - .gradle/wrapper
+  - .gradle/caches
+
+stages:
+- build
+- test
+- docker
+#- deploy
+
+build:
+  image: openjdk:8-jdk
+  stage: build
+  script: ./gradlew --build-cache assemble
+  artifacts:
+    paths:
+    - build/libs/*.jar
+    expire_in: 1 week
+
+test:
+  image: openjdk:8-jdk
+  stage: test
+  script: ./gradlew --build-cache check jacocoTestReport printCoverage
+  coverage: '/^Coverage:\s(\d+\.\d+%)/'
+  artifacts:
+    reports:
+      junit: build/test-results/test/*.xml
+    expire_in: 1 week
+
+inttest:
+  image: openjdk:8-jdk
+  stage: test
+  script: ./gradlew --build-cache cucumberTest
+  artifacts:
+    paths:
+    - build/cucumber-reports
+    reports:
+      junit: build/test-results/cucumberTest/*.xml
+    expire_in: 1 week
+
+docker build and push:
+  stage: docker
+  cache: {}
+  script:
+  - docker build -t registry.gitlab.com/tippkick/tippkick-spielplan .
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.gitlab.com
+  - docker push registry.gitlab.com/tippkick/tippkick-spielplan
+  dependencies:
+  - build
+
+#k8s deploy:
+#  image: google/cloud-sdk
+#  stage: deploy
+#  cache: {}
+#  script:
+#  - echo "$GOOGLE_KEY" > key.json
+#  - gcloud auth activate-service-account --key-file key.json
+#  - gcloud config set compute/zone europe-west3-b
+#  - gcloud config set project tippkick-209505
+#  - gcloud container clusters get-credentials tippkick
+#  - kubectl delete secret registry.gitlab.com || true
+#  - kubectl create secret docker-registry registry.gitlab.com --docker-server="$CI_REGISTRY" --docker-username=$CI_REGISTRY_USER #--docker-password=$CI_REGISTRY_PASSWORD --docker-email="$GITLAB_USER_EMAIL"
+#  - kubectl apply -f spielplan-k8s-app.yml
+

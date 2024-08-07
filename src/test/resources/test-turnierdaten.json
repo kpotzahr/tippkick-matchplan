@@ -1,0 +1,14 @@
+{
+  "matches":[
+    {
+      "starttime": "2018-06-30T03:00:00Z",
+      "hometeam": "GER",
+      "foreignteam": "BRA"
+    },
+    {
+      "starttime": "2018-06-29T01:00:00Z",
+      "hometeam": "BRA",
+      "foreignteam": "GER"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tippkick-spielplan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tippkick-spielplan
+  template:
+    metadata:
+      labels:
+        app: tippkick-spielplan
+        tier: backend
+    spec:
+      containers:
+      - name: tippkick-spielplan
+        image: registry.gitlab.com/tippkick/tippkick-spielplan
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 7080
+      imagePullSecrets:
+      - name: registry.gitlab.com
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tippkick-spielplan-service
+spec:
+  selector:
+    app: tippkick-spielplan
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 7080
+    protocol: TCP
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: tippkick-spielplan-service-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /spielplan
+        backend:
+          serviceName: tippkick-spielplan-service
+          servicePort: 80

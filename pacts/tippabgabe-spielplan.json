@@ -1,0 +1,81 @@
+{
+  "provider": {
+    "name": "spielplan"
+  },
+  "consumer": {
+    "name": "tippabgabe"
+  },
+  "interactions": [
+    {
+      "description": "request to return match with id",
+      "request": {
+        "method": "GET",
+        "path": "/match/1"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "foreignteam": "POR",
+          "matchId": 1,
+          "hometeam": "GER"
+        },
+        "matchingRules": {
+          "body": {
+            "$.hometeam": {
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[A-Z]{3}"
+                }
+              ],
+              "combine": "AND"
+            },
+            "$.foreignteam": {
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[A-Z]{3}"
+                }
+              ],
+              "combine": "AND"
+            }
+          }
+        }
+      },
+      "providerStates": [
+        {
+          "name": "match with id 1 exists"
+        }
+      ]
+    },
+    {
+      "description": "request to return match with id",
+      "request": {
+        "method": "GET",
+        "path": "/match/2"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "providerStates": [
+        {
+          "name": "match with id 2 does not exist"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "4.0.4"
+    }
+  }
+}
